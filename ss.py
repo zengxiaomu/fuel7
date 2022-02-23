@@ -8,7 +8,7 @@ import numpy as np
 # global random sequence variables
 #
 
-seq = (0)
+seq = [0]
 seq_index = 1
 
 #
