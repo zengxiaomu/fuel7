@@ -150,6 +150,19 @@ default_port=1729
 sel = selectors.DefaultSelector()
 
 #
+# accept client connection
+#
+
+def accept_conn(key, mask):
+    s = key.fileobj
+    s.setblocking(True)
+    conn, addr = s.accept()
+    s.setblocking(False)
+    print(f"Accepted connection from {addr}")
+    conn.setblocking(False)
+    sel.register(conn, selectors.EVENT_READ, data=service_conn)
+
+#
 # start socket server
 #
 
@@ -163,7 +176,7 @@ def init_server(host=default_host, port=default_port):
         return 0
     print(f"listening on {(host, port)}")
     s.setblocking(False)
-    sel.register(s, selectors.EVENT_READ, data=None)
+    sel.register(s, selectors.EVENT_READ, data=accept_conn)
     return s
 
 #
@@ -185,20 +198,8 @@ def init_conn(host=default_host, port=default_port):
         return err
     else:
         s.setblocking(False)
-        sel.register(s, selectors.EVENT_READ | selectors.EVENT_WRITE, data=None)
+        # sel.register(s, selectors.EVENT_READ, read)
         return s
-
-#
-# accept client connection
-#
-
-def accept_conn(s):
-    s.setblocking(True)
-    conn, addr = s.accept()
-    s.setblocking(False)
-    print(f"Accepted connection from {addr}")
-    conn.setblocking(False)
-    sel.register(conn, selectors.EVENT_READ | selectors.EVENT_WRITE, data=None)
 
 #
 # receive client message
@@ -206,22 +207,18 @@ def accept_conn(s):
 
 def service_conn(key, mask):
     s = key.fileobj
-    data = key.data
+    peer = s.getpeername()
     if mask & selectors.EVENT_READ:
-        print(f"receive data from {data.addr}")
-        recv_data = sock.recv(1024)
-        print(f"done")
+        print(f"receive data from {peer}")
+        recv_data = s.recv(1024)
         if recv_data:
-            data.outb += recv_data
+            print(f"data received {recv_data}")
         else:
-            print(f"Closing connection to {data.addr}")
+            print(f"Closing connection to {peer}")
             sel.unregister(s)
             s.close()
     if mask & selectors.EVENT_WRITE:
-        if data.outb:
-            print(f"Sending {data.outb!r} to {data.addr}")
-            sent = s.send(data.outb)
-            data.outb = data.outb[sent:]
+        print(f"write data to {peer}")
 
 #
 # main loop for handling socket events
@@ -230,13 +227,10 @@ def service_conn(key, mask):
 def server_loop():
     try:
         while True:
-            events = sel.select(timeout=1)
+            events = sel.select(timeout=0)
             for key, mask in events:
-                print("key.data: %s" % key.data)
-                if key.data == None:
-                    accept_conn(ss)
-                else:
-                    service_conn(key, mask)
+                callback = key.data
+                callback(key, mask)
     except KeyboardInterrupt:
         print("keyboard interrupt, exiting")
     finally:
