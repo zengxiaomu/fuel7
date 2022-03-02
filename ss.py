@@ -3,23 +3,51 @@ import socket
 import selectors
 import time
 import numpy as np
+import configparser as cp
+
+#
+# global config hash variable
+#
+
+config = cp.ConfigParser()
+read_config_hash_status = False
+config_global = {}
+
+#
+# read config hash
+#
+
+def read_config_hash(fn='ss.ini'):
+    global config_global
+    config.read(fn)
+    read_config_hash_status = True
+    config_global = config['Global']
 
 #
 # global random sequence variables
 #
 
-seq = [0]
-seq_index = 1
+seq = []
+seq_index = 0
+packet_seq = []  
 
 #
 # generate random sequnce based on probability density function 
 #
 
-def gen_random_seq(c=10):
+def gen_random_seq(c=1000):
+    global seq
+
+    if read_config_hash_status == False:
+        read_config_hash()
+    c = int(config_global['MaxRandSeqCount'])
+    m = int(config_global['DistMean'])  # Unit of DistMean is nanosecond
+
     #
     # easy peasy
     #
-    seq = np.random.exponential(1.25, 10)
+    
+    seq = np.random.exponential(m, c)
     print(seq)
 
 #
@@ -45,9 +73,86 @@ def read_seq(fn='seq.txt'):
     # in case numpy is not available..read it from a file
     #
     
+
+#
+# VoIP: get talking state packets per second
+#
+
+def get_talking_packet_rate():
+   size = int(config_global['PktSizeTalking'])
+   rate = int(config_global['SourceRate'])
+   pkt_rate = int (rate / size)
+   print("talking rate %s" % pkt_rate)
+   return(pkt_rate)
+
+#
+# VoIP: get silent state packets per second
+#
+
+def get_silent_packet_rate():
+   size = int(config_global['PktSizeSilent'])
+   rate = int(config_global['SourceRateSilent'])
+   pkt_rate = int (rate / size)
+   print("silent rate %s" % pkt_rate)
+   return(pkt_rate)
+
+#
+# generate packet sequence
+#
+
+def save_packet_seq():
+    f = open('packets.txt', 'w')
+    for (delta, size) in packet_seq:
+        f.write("%s %s\n" % (delta, size))
+    f.close()
+
+def get_talking_packet_size():
+    return(int(config_global['PktSizeTalking']))
+
+def get_silent_packet_size():
+    return(int(config_global['PktSizeSilent']))
+
+def do_send_packet(rate):
+    t = int(np.random.uniform(0, 1000))
+    # print("do_send_packet: %s %s" % (t, rate))
+    if t < rate:
+        return True
+    else:
+        return False
+
+def gen_packet_seq(c=100):
+    global packet_seq
+    pkt_rate_talking = get_talking_packet_rate()
+    pkt_rate_silent = get_silent_packet_rate()
+    pkt_size_talking = get_talking_packet_size()
+    pkt_size_silent = get_silent_packet_size()
+    delta = 0
+    rate = pkt_rate_talking
+    size = pkt_size_talking
+    for i in range(0, c-1, 1):
+        duration = int(seq[i])
+        # print(size)
+        for k in range(0, duration-1, 1):
+            if do_send_packet(rate):
+                packet_seq.append([delta*1000, size])
+            delta += 1
+        #
+        # switch from/to talking/silent state
+        #
+        if (size == pkt_size_talking):
+            size = pkt_size_silent
+            rate = pkt_rate_silent
+        else:
+            size = pkt_size_talking
+            rate = pkt_rate_talking
+
+    # print(packet_seq)
+    save_packet_seq()
+
 #
 # VoIP 
 #
+
 
 def send_active_packet(size=122):
     print(f"send active packet size {size}")
