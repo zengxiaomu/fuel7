@@ -4,6 +4,18 @@ import ss
 
 # print(np.random.lognormal(np.log(10710), np.log(25032), 10))
 
+# ss.config.read('ss.ini')
+
+# for k in ss.config.sections():
+    # print("[%s]" % k)
+    # for key in ss.config[k]:
+        # print("%s = %s " % (key, ss.config[k][key]))
+
+ss.gen_random_seq()
+ss.gen_packet_seq()
+
+exit(0)
+
 s = ss.init_conn()
 s2 = ss.init_conn()
 s3 = ss.init_conn()

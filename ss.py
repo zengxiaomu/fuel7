@@ -126,16 +126,19 @@ def gen_packet_seq(c=100):
     pkt_rate_silent = get_silent_packet_rate()
     pkt_size_talking = get_talking_packet_size()
     pkt_size_silent = get_silent_packet_size()
-    delta = 0
+    abs_time = 0
+    last_epoch = 0
     rate = pkt_rate_talking
     size = pkt_size_talking
     for i in range(0, c-1, 1):
         duration = int(seq[i])
         # print(size)
         for k in range(0, duration-1, 1):
+            abs_time += 1
             if do_send_packet(rate):
+                delta = abs_time - last_epoch
+                last_epoch = abs_time
                 packet_seq.append([delta*1000, size])
-            delta += 1
         #
         # switch from/to talking/silent state
         #
