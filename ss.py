@@ -177,6 +177,28 @@ def init_voip():
     next_state_change = seq[0]
     seq_index = 1
 
+seq2 = []
+seq2_index = 0
+link_type = 0  # 1: uplink  0: downlink
+
+def get_dl_jitter():
+    global seq2
+    seq2 = np.random.laplace(0, 5.11, 100)
+
+def voip_get_jitter():
+    global seq2
+    global seq2_index
+    global link_type
+    if (link_type == 1):  # uplink
+        jitter = 0
+    else:  # downlink
+        jitter = seq2[seq2_index]
+        seq2_index += 1
+        if (seq2_index >= 100):
+            seq2_index = 0
+    print("jitter %d" % jitter)
+    return jitter
+
 def voip_get_delta():
     global state_now
     global abs_time
@@ -185,7 +207,7 @@ def voip_get_delta():
     global seq_index
     global voip_pkt_size
 
-    jitter = 0  # laplacian for downlink, 0 for uplink
+    jitter = voip_get_jitter()  # laplacian for downlink, 0 for uplink
 
     if (state_now == 1):  # currently talking state
         delta = 20 + jitter
