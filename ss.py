@@ -29,6 +29,7 @@ def read_config_hash(fn='ss.ini'):
 
 seq = []
 seq_index = 0
+MAX_SEQ = 100
 packet_seq = []  
 
 #
@@ -41,21 +42,34 @@ def gen_random_seq(c=1000):
     if read_config_hash_status == False:
         read_config_hash()
     c = int(config_global['MaxRandSeqCount'])
-    m = int(config_global['DistMean'])  # Unit of DistMean is nanosecond
+    m = int(config_global['DistMean'])  
 
     #
     # easy peasy
     #
     
     seq = np.random.exponential(m, c)
-    print(seq)
+
+    MAX_SEQ = c
 
 #
 # save random sequence to file
 #
 
 def save_seq(fn='seq.txt'):
-    print(seq)
+    global seq
+
+    c = int(config_global['MaxRandSeqCount'])
+    m = int(config_global['DistMean'])  
+
+    with open(fn, 'w') as f:
+        f.write("#\n")
+        f.write("# MaxRandSeqCount: %d\n" % c)
+        f.write("# DistMean: %d\n" % m)
+        f.write("#\n")
+        for val in seq:
+            f.write("%d\n" % val)
+
     # 
     # save to file for re-use 
     # This could be useful if generating
@@ -151,6 +165,48 @@ def gen_packet_seq(c=100):
 
     # print(packet_seq)
     save_packet_seq()
+
+state_now = 1  # 1: talking  0: silent
+abs_time = 0
+next_state_change = 0
+voip_pkt_size = 33
+
+def init_voip():
+    global next_state_change
+    global seq_index
+    next_state_change = seq[0]
+    seq_index = 1
+
+def voip_get_delta():
+    global state_now
+    global abs_time
+    global next_state_change
+    global seq
+    global seq_index
+    global voip_pkt_size
+
+    jitter = 0  # laplacian for downlink, 0 for uplink
+
+    if (state_now == 1):  # currently talking state
+        delta = 20 + jitter
+    else:
+        delta = 180 + jitter
+
+    abs_time += delta
+    print("time %d %d %d" % (abs_time, delta, next_state_change))
+    if (abs_time >= next_state_change):
+        if (state_now == 1):
+            state_now = 0
+            voip_pkt_size = 7
+        else:
+            state_now = 1
+            voip_pkt_size = 33
+        next_state_change += seq[seq_index]
+        seq_index += 1
+        if (seq_index >= MAX_SEQ):
+            seq_index = 0
+
+    return delta
 
 #
 # VoIP 

@@ -12,7 +12,12 @@ import ss
         # print("%s = %s " % (key, ss.config[k][key]))
 
 ss.gen_random_seq()
-ss.gen_packet_seq()
+ss.init_voip()
+ss.save_seq()
+
+while True:
+    delta = ss.voip_get_delta()
+    time.sleep(2)
 
 exit(0)
 
