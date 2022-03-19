@@ -202,6 +202,10 @@ def voip_get_jitter():
         jitter = 0
     else:  # downlink
         jitter = seq2[seq2_index]
+        if (jitter < -80):
+            jitter = -80
+        if (jitter > 80):
+            jitter = 80
         seq2_index += 1
         if (seq2_index >= MAX_SEQ):
             seq2_index = 0
@@ -222,6 +226,8 @@ def voip_get_delta():
         delta = 20 + jitter
     else:
         delta = 180 + jitter
+    if (delta < 0):
+        delta = 0
 
     abs_time += delta
     print("time %d %d %d" % (abs_time, delta, next_state_change))
