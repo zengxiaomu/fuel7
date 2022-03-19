@@ -203,7 +203,7 @@ def voip_get_jitter():
     else:  # downlink
         jitter = seq2[seq2_index]
         seq2_index += 1
-        if (seq2_index >= 100):
+        if (seq2_index >= MAX_SEQ):
             seq2_index = 0
     print("jitter %d" % jitter)
     return jitter
