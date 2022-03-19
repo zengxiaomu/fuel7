@@ -14,7 +14,8 @@ import ss
 ss.gen_random_seq()
 ss.init_voip()
 ss.save_seq()
-ss.get_dl_jitter()
+ss.init_seq2()
+ss.save_seq2()
 
 while True:
     delta = ss.voip_get_delta()

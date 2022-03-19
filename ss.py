@@ -177,13 +177,22 @@ def init_voip():
     next_state_change = seq[0]
     seq_index = 1
 
-seq2 = []
+seq2 = []  # laplace sequence
 seq2_index = 0
 link_type = 0  # 1: uplink  0: downlink
 
-def get_dl_jitter():
+def save_seq2(fn='seq2.txt'):
     global seq2
+
+    with open(fn, 'w') as f:
+        for val in seq2:
+            f.write("%f\n" % val)
+
+def init_seq2():
+    global seq2
+    global link_type
     seq2 = np.random.laplace(0, 5.11, 100)
+    link_type = config_global['LinkType']
 
 def voip_get_jitter():
     global seq2
