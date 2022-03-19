@@ -191,7 +191,7 @@ def save_seq2(fn='seq2.txt'):
 def init_seq2():
     global seq2
     global link_type
-    seq2 = np.random.laplace(0, 5.11, 100)
+    seq2 = np.random.laplace(0, 5.11, MAX_SEQ)
     link_type = config_global['LinkType']
 
 def voip_get_jitter():
