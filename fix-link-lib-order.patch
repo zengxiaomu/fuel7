@@ -1,0 +1,32 @@
+diff --git a/build/Makefile b/build/Makefile
+index 2ab4c09..72f2535 100644
+--- a/build/Makefile
++++ b/build/Makefile
+@@ -149,7 +149,7 @@ endef
+ 
+ # $(call ...,<target-name>,<flags...>)
+ define add-link-flags
+-$(eval $(BUILD_SCOPE)-$(1)_LDFLAGS += $(strip $(2)))
++$(eval $(BUILD_SCOPE)-$(1)_USER_LDFLAGS += $(strip $(2)))
+ endef
+ 
+ # $(call ...)
+@@ -365,7 +365,7 @@ $(foreach output,$($(2)_$(outputtype)_OUTPUTS), \
+ $(eval $(1)_LDFLAGS += $(addprefix -L,$(dir $(output)))) \
+ $(eval $(1)_LDFLAGS += $(addprefix -l,$(patsubst $($(1)_LIB_PFX)%$($(1)_lib_EXT),%,$(notdir $(output))))) \
+ )) \
+-$(eval $(1)_LDFLAGS += $($(2)_LDFLAGS))
++$(eval $(1)_LDFLAGS += $($(2)_LDFLAGS) $($(1)_USER_LDFLAGS))
+ endef
+ 
+ # $(call ...,<target-moniker>,<depdir>,<depvar>)
+diff --git a/core/unittest/expr/build.mk b/core/unittest/expr/build.mk
+index f22cd59..88fa062 100644
+--- a/core/unittest/expr/build.mk
++++ b/core/unittest/expr/build.mk
+@@ -4,4 +4,5 @@ $(call add-exec-target,$(TARGET))
+ $(call add-inc-dirs,$(TARGET),.)
+ $(call add-wildcard-srcs,$(TARGET),*.c)
+ $(call add-static-dep-dirs,$(TARGET),../../config/static-all)
++$(call add-link-flags,$(TARGET),-lm)
+ 
